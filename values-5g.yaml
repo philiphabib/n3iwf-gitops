@@ -1,0 +1,6 @@
+# N3IWF configuration
+# Phase 1: namespace/bootstrap only.
+# N3IWF workload will be added in a later phase.
+
+n3iwf:
+  enabled: false
