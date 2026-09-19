@@ -1,0 +1,78 @@
+{{- if .Values.n3iwf.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: n3iwf-config
+  namespace: {{ .Release.Namespace }}
+data:
+  n3iwfcfg.yaml: |
+    info:
+      version: 1.0.4
+      description: N3IWF configuration for Open5GS
+
+    configuration:
+      N3IWFInformation:
+        GlobalN3IWFID:
+          PLMNID:
+            MCC: {{ .Values.n3iwf.config.plmn.mcc }}
+            MNC: {{ .Values.n3iwf.config.plmn.mnc }}
+          N3IWFID: {{ .Values.n3iwf.config.n3iwfId }}
+
+        Name: Open5GS_N3IWF
+
+        SupportedTAList:
+          - TAC: {{ .Values.n3iwf.config.tac }}
+            BroadcastPLMNList:
+              - PLMNID:
+                  MCC: {{ .Values.n3iwf.config.plmn.mcc }}
+                  MNC: {{ .Values.n3iwf.config.plmn.mnc }}
+                TAISliceSupportList:
+                  - SNSSAI:
+                      SST: {{ .Values.n3iwf.config.slice.sst }}
+                      SD: {{ .Values.n3iwf.config.slice.sd }}
+
+      AMFSCTPAddresses:
+        - IP:
+            - {{ .Values.n3iwf.config.amf.address }}
+          Port: {{ .Values.n3iwf.config.amf.port }}
+
+      NASTCPPort: 20000
+
+      IKEBindAddress: {{ .Values.n3iwf.config.ikeBindAddress }}
+
+      IPSecTunnelAddress: {{ .Values.n3iwf.config.ipsecTunnelAddress }}
+
+      UEIPAddressRange: {{ .Values.n3iwf.config.ueIpAddressRange }}
+
+      XFRMInterfaceName: {{ .Values.n3iwf.config.xfrmInterfaceName }}
+
+      XFRMInterfaceID: {{ .Values.n3iwf.config.xfrmInterfaceId }}
+
+      GTPBindAddress: {{ .Values.n3iwf.config.gtpBindAddress }}
+
+      FQDN: {{ .Values.n3iwf.config.fqdn }}
+
+      PrivateKey: /opt/n3iwf/config/TLS/n3iwf.key
+
+      CertificateAuthority: /opt/n3iwf/config/TLS/n3iwf.pem
+
+      Certificate: /opt/n3iwf/config/TLS/n3iwf.pem
+
+      LivenessCheck:
+        enable: true
+        transFreq: 60s
+        maxRetryTimes: 4
+
+    logger:
+      N3IWF:
+        debugLevel: info
+        ReportCaller: false
+
+      NGAP:
+        debugLevel: info
+        ReportCaller: false
+
+      Aper:
+        debugLevel: warn
+        ReportCaller: false
+{{- end }}

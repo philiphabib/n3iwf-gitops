@@ -1,0 +1,64 @@
+{{- if .Values.n3iwf.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n3iwf
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: n3iwf
+    app.kubernetes.io/part-of: telecom-platform
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: n3iwf
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: n3iwf
+        app.kubernetes.io/part-of: telecom-platform
+
+    spec:
+      hostNetwork: {{ .Values.n3iwf.hostNetwork }}
+      dnsPolicy: {{ .Values.n3iwf.dnsPolicy }}
+
+      nodeSelector:
+{{ toYaml .Values.n3iwf.nodeSelector | indent 8 }}
+
+      containers:
+        - name: n3iwf
+          image: "{{ .Values.n3iwf.image.repository }}:{{ .Values.n3iwf.image.tag }}"
+          imagePullPolicy: {{ .Values.n3iwf.image.pullPolicy }}
+
+          securityContext:
+            capabilities:
+              add:
+{{ toYaml .Values.n3iwf.securityContext.capabilities.add | indent 16 }}
+
+          command:
+            - /opt/n3iwf/n3iwf
+
+          volumeMounts:
+            - name: config
+              mountPath: /opt/n3iwf/config/n3iwfcfg.yaml
+              subPath: n3iwfcfg.yaml
+              readOnly: true
+
+            - name: tls
+              mountPath: /opt/n3iwf/config/TLS
+              readOnly: true
+
+          resources:
+{{ toYaml .Values.n3iwf.resources | indent 12 }}
+
+      volumes:
+        - name: config
+          configMap:
+            name: n3iwf-config
+
+        - name: tls
+          secret:
+            secretName: n3iwf-tls
+{{- end }}

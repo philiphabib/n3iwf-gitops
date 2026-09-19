@@ -1,6 +1,53 @@
-# N3IWF configuration
-# Phase 1: namespace/bootstrap only.
-# N3IWF workload will be added in a later phase.
-
 n3iwf:
-  enabled: false
+  enabled: true
+
+  image:
+    repository: philiphabib/n3iwf-open5gs
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  nodeSelector:
+    kubernetes.io/hostname: k8s-worker1
+
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
+
+  securityContext:
+    capabilities:
+      add:
+        - NET_ADMIN
+
+  config:
+    plmn:
+      mcc: "999"
+      mnc: "70"
+
+    n3iwfId: 135
+    tac: "000001"
+
+    amf:
+      address: 10.106.47.141
+      port: 38412
+
+    ikeBindAddress: 192.168.122.224
+    ipsecTunnelAddress: 10.0.0.1
+    ueIpAddressRange: 10.0.0.0/24
+
+    xfrmInterfaceName: xfrmi
+    xfrmInterfaceId: 1
+
+    gtpBindAddress: 192.168.122.224
+
+    fqdn: n3iwf.free5gc.org
+
+    slice:
+      sst: 1
+      sd: "111111"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
