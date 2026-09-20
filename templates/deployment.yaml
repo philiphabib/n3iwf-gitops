@@ -26,16 +26,56 @@ spec:
 
       nodeSelector:
 {{ toYaml .Values.n3iwf.nodeSelector | indent 8 }}
-
+      {{- if .Values.n3iwf.initCleanup.enabled }}
+      initContainers:
+        - name: xfrm-cleanup
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - -c
+            - |
+              apk add --no-cache iproute2 >/dev/null 2>&1
+              set +e
+              ip xfrm state flush
+              ip xfrm policy flush
+              ip link del ipsec0 2>/dev/null
+              for IF in $(ip link | grep -o 'xfrmi[^:@]*'); do
+                ip link del "$IF" 2>/dev/null
+              done
+              exit 0
+          securityContext:
+            privileged: true
+      {{- end }}
       containers:
         - name: n3iwf
           image: "{{ .Values.n3iwf.image.repository }}:{{ .Values.n3iwf.image.tag }}"
           imagePullPolicy: {{ .Values.n3iwf.image.pullPolicy }}
 
           securityContext:
+            {{- if .Values.n3iwf.securityContext.privileged }}
+            privileged: {{ .Values.n3iwf.securityContext.privileged }}
+            {{- end }}
             capabilities:
               add:
 {{ toYaml .Values.n3iwf.securityContext.capabilities.add | indent 16 }}
+
+          {{- if .Values.n3iwf.preStopCleanup.enabled }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    set +e
+                    ip xfrm state flush
+                    ip xfrm policy flush
+                    ip link del ipsec0 2>/dev/null
+                    for IF in $(ip link | grep -o 'xfrmi[^:@]*'); do
+                      ip link del "$IF" 2>/dev/null
+                    done
+                    exit 0
+          {{- end }}
 
           command:
             - /opt/n3iwf/n3iwf

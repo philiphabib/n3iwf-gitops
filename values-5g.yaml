@@ -16,6 +16,14 @@ n3iwf:
     capabilities:
       add:
         - NET_ADMIN
+        - SYS_MODULE
+        - NET_BIND_SERVICE
+
+  preStopCleanup:
+    enabled: true
+
+  initCleanup:
+    enabled: true
 
   config:
     plmn:
