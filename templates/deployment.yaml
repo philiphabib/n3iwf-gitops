@@ -22,6 +22,7 @@ spec:
 
     spec:
       hostNetwork: {{ .Values.n3iwf.hostNetwork }}
+      hostPID: true
       dnsPolicy: {{ .Values.n3iwf.dnsPolicy }}
 
       nodeSelector:
@@ -29,20 +30,20 @@ spec:
       {{- if .Values.n3iwf.initCleanup.enabled }}
       initContainers:
         - name: xfrm-cleanup
-          image: nicolaka/netshoot:latest      # <-- change from alpine:3.20
+          image: nicolaka/netshoot:latest
           command:
             - /bin/sh
             - -c
             - |
               set +e
-              ip xfrm state flush
-              ip xfrm policy flush
-              ip link del ipsec0 2>/dev/null
-              for IF in $(ip link | grep -o 'xfrmi[^:@]*'); do
-                ip link del "$IF"
+              nsenter -t 1 -n ip xfrm state flush
+              nsenter -t 1 -n ip xfrm policy flush
+              nsenter -t 1 -n ip link del ipsec0 2>/dev/null
+              for IF in $(nsenter -t 1 -n ip link | grep -o 'xfrmi[^:@]*'); do
+                nsenter -t 1 -n ip link del "$IF"
               done
               echo "cleanup done at $(date -u +%FT%TZ)"
-              ip link show type xfrm
+              nsenter -t 1 -n ip link show type xfrm
               exit 0
           securityContext:
             privileged: true
