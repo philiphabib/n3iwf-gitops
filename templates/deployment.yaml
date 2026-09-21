@@ -27,27 +27,7 @@ spec:
 
       nodeSelector:
 {{ toYaml .Values.n3iwf.nodeSelector | indent 8 }}
-      {{- if .Values.n3iwf.initCleanup.enabled }}
-      initContainers:
-        - name: xfrm-cleanup
-          image: nicolaka/netshoot:latest
-          command:
-            - /bin/sh
-            - -c
-            - |
-              set +e
-              nsenter -t 1 -n ip xfrm state flush
-              nsenter -t 1 -n ip xfrm policy flush
-              nsenter -t 1 -n ip link del ipsec0 2>/dev/null
-              for IF in $(nsenter -t 1 -n ip link | grep -o 'xfrmi[^:@]*'); do
-                nsenter -t 1 -n ip link del "$IF"
-              done
-              echo "cleanup done at $(date -u +%FT%TZ)"
-              nsenter -t 1 -n ip link show type xfrm
-              exit 0
-          securityContext:
-            privileged: true
-      {{- end }}
+
       containers:
         - name: n3iwf
           image: "{{ .Values.n3iwf.image.repository }}:{{ .Values.n3iwf.image.tag }}"
@@ -61,26 +41,22 @@ spec:
               add:
 {{ toYaml .Values.n3iwf.securityContext.capabilities.add | indent 16 }}
 
-          {{- if .Values.n3iwf.preStopCleanup.enabled }}
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    set +e
-                    ip xfrm state flush
-                    ip xfrm policy flush
-                    ip link del ipsec0 2>/dev/null
-                    for IF in $(ip link | grep -o 'xfrmi[^:@]*'); do
-                      ip link del "$IF" 2>/dev/null
-                    done
-                    exit 0
-          {{- end }}
-
           command:
-            - /opt/n3iwf/n3iwf
+            - /bin/sh
+            - -c
+            - |
+              set +e
+              echo "=== n3iwf pre-start cleanup at $(date -u +%FT%TZ) ==="
+              ip xfrm state flush
+              ip xfrm policy flush
+              ip link del ipsec0 2>/dev/null
+              for IF in $(ip link | grep -o 'xfrmi[^:@]*'); do
+                ip link del "$IF" 2>/dev/null
+              done
+              echo "=== remaining xfrm interfaces: ==="
+              ip link show type xfrm
+              echo "=== starting n3iwf ==="
+              exec /opt/n3iwf/n3iwf
 
           volumeMounts:
             - name: config
