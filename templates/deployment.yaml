@@ -47,9 +47,6 @@ spec:
           securityContext:
             privileged: true
       {{- end }}
-          securityContext:
-            privileged: true
-      {{- end }}
       containers:
         - name: n3iwf
           image: "{{ .Values.n3iwf.image.repository }}:{{ .Values.n3iwf.image.tag }}"
