@@ -29,20 +29,24 @@ spec:
       {{- if .Values.n3iwf.initCleanup.enabled }}
       initContainers:
         - name: xfrm-cleanup
-          image: alpine:3.20
+          image: nicolaka/netshoot:latest      # <-- change from alpine:3.20
           command:
             - /bin/sh
             - -c
             - |
-              apk add --no-cache iproute2 >/dev/null 2>&1
               set +e
               ip xfrm state flush
               ip xfrm policy flush
               ip link del ipsec0 2>/dev/null
               for IF in $(ip link | grep -o 'xfrmi[^:@]*'); do
-                ip link del "$IF" 2>/dev/null
+                ip link del "$IF"
               done
+              echo "cleanup done at $(date -u +%FT%TZ)"
+              ip link show type xfrm
               exit 0
+          securityContext:
+            privileged: true
+      {{- end }}
           securityContext:
             privileged: true
       {{- end }}
